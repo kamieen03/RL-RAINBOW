@@ -3,8 +3,10 @@ import tkinter
 from snakegame.painter import Painter
 from snakegame.game import Game
 
+import structures.const as const
 
-BOARD_SIZE = 10
+
+BOARD_SIZE = const.BOARD_SIZE
 CELL_SIZE = 30
 
 class App:

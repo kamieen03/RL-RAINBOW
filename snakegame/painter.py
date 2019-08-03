@@ -12,7 +12,7 @@ class Painter:
         self.grid_c = grid.color
         self.head_c = 'green'
         self.food_c = "red"
-        for cell in self.grid.cell_cords:
+        for cell in grid.cell_cords:
             c = tkinter.Frame(master = master, height = self.grid.cell_size, width = self.grid.cell_size, bg = self.grid_c)
             c.grid(row = cell[0], column = cell[1])
             self.cells[cell] = c

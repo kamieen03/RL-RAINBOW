@@ -1,0 +1,14 @@
+import numpy as np
+
+BATCH_SIZE = 32
+
+EPSILON_START = 1
+EPSILON_FINAL = 0.01
+EPSILON_DECAY = 10000
+
+def epsilon(iter):
+    return EPSILON_FINAL + (EPSILON_START - EPSILON_FINAL) / np.exp(iter/EPSILON_DECAY)
+
+GAMMA = 0.99
+
+BOARD_SIZE = 16

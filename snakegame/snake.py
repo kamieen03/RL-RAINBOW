@@ -2,7 +2,6 @@ from tkinter import *
 import random as rnd
 
 TIMESTEP = 200
-HEIGHT = WIDTH = 200
 
 class Snake:
     def __init__(self, start):
