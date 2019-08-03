@@ -2,3 +2,4 @@ papers/*
 RL-Adventure/*
 *.swp
 *.pyc
+.idea/*
