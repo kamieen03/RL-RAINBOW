@@ -3,29 +3,18 @@ import torch
 import structures.const as const
 import random
 import _thread
+from collections import deque
 
 class DQN(nn.Module):
     def __init__(self):
         super(DQN, self).__init__()
-#        n0, F1, S1, P1 = cell_number, 3, 1, 0
-#        self.conv1 = nn.Conv2d(2, 16, kernel_size=F1, stride=S1, padding=P1)
-#        self.bn1 = nn.BatchNorm2d(16)
-#        n1, F2, S2, P2 = int((n0 - F1 + 2 * P1) / S1 + 1), 3, 1, 0
-#        self.conv2 = nn.Conv2d(16, 32, kernel_size=F2, stride=S2, padding=P2)
-#        self.bn2 = nn.BatchNorm2d(32)
-#        n2 = int((n1 - F2 + 2 * P2)/S1 + 1)
-#        n3 = n2 * n2 * 32
-#        # self.conv3 = nn.Conv2d(32, 32, kernel_size=5, stride=2)
-#        # self.bn3 = nn.BatchNorm2d(32)
-#        self.l1 = nn.Linear(n3, 16)
-#        self.head = nn.Linear(16, 4)
         self.LOCK = _thread.allocate_lock()
         self.model16 = nn.Sequential(
-            nn.Conv2d(1, 32, 16),
+            nn.Conv2d(4, 32, 16),
             nn.BatchNorm2d(32),
             nn.ReLU())
         self.model8 = nn.Sequential(
-            nn.Conv2d(1, 32, 8, stride = 2),
+            nn.Conv2d(4, 32, 8, stride = 2),
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.Conv2d(32, 64, 3),
@@ -35,7 +24,7 @@ class DQN(nn.Module):
             nn.BatchNorm2d(64),
             nn.ReLU())
         self.model4 = nn.Sequential(
-            nn.Conv2d(1, 32, 4, stride = 2),
+            nn.Conv2d(4, 32, 4, stride = 2),
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.Conv2d(32, 64, 3),
@@ -76,6 +65,8 @@ class DQN(nn.Module):
 
 
     def eps_greedy(self, state, iter):
+        if type(state) == deque:
+            state = torch.cat(tuple(state), dim = 1)
         with self.LOCK:
             if random.random() > const.epsilon(iter):
                 self.eval()
@@ -87,6 +78,8 @@ class DQN(nn.Module):
         return action
 
     def greedy(self, state):
+        if type(state) == deque:
+            state = torch.cat(tuple(state), dim = 1)
         with self.LOCK:
             self.eval()
             q_value = self(state)

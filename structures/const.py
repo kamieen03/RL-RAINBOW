@@ -10,5 +10,6 @@ def epsilon(iter):
     return EPSILON_FINAL + (EPSILON_START - EPSILON_FINAL) / np.exp(iter/EPSILON_DECAY)
 
 GAMMA = 0.99
+TARGET_UPDATE = 2000
 
 BOARD_SIZE = 16

@@ -9,6 +9,8 @@ class ReplayMemory(object):
         self.memory = deque(maxlen=capacity)
     
     def push(self, state, action, reward, next_state, done):
+        state = torch.cat(tuple(state), dim=1)
+        next_state = torch.cat(tuple(next_state), dim=1)
         self.memory.append((state, action, reward, next_state, done))
     
     def sample(self):
