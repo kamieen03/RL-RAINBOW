@@ -49,9 +49,10 @@ class Game:
             reward = -5.0
         elif self.snake.on_reward(self.grid.get_reward()):
             self.snake.grow()
-            self.snake.add_pts(20.0)
             self.place_new_reward()
             reward = 1.0
+        else:
+            reward = -0.1
         return {'dead': dead,
                 'reward': reward}
 
