@@ -59,7 +59,8 @@ class Agent:
         self.optimizer.zero_grad()
 
         with self.target_net.LOCK:
-            next_q_vals = self.target_net(next_states).max(1)[0]
+            max_actions = self.policy_net(next_states).max(1)[1]
+            next_q_vals = self.target_net(next_states).gather(1, max_actions.unsqueeze(1)).squeeze(1)
         with self.policy_net.LOCK:
             q_vals = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
 
