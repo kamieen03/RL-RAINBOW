@@ -46,7 +46,7 @@ class Game:
         if self.snake.hit_the_wall(self.grid.get_size()) or self.snake.bit_itself():
             self.snake.die()
             dead = True
-            reward = -5.0
+            reward = -1.0
         elif self.snake.on_reward(self.grid.get_reward()):
             self.snake.grow()
             self.place_new_reward()
