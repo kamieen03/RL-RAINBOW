@@ -65,7 +65,7 @@ class Agent:
             q_vals = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
 
             target_vals = rewards + const.GAMMA * next_q_vals * (1 - deaths)
-            loss = (q_vals - target_vals).pow(2).mean()
+            loss = (target_vals - q_vals).pow(2).mean()
 
             loss.backward()
             self.optimizer.step()
