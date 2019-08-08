@@ -6,7 +6,7 @@ from collections import deque
 
 import structures.const as const
 from structures.network import DQN
-from structures.replay_memory import ReplayMemory
+from structures.sumtree import SumTree
 
 from snakegame.game import Game
 from snakegame.painter import Painter
@@ -18,7 +18,7 @@ class Agent:
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.policy_net.cuda()
         self.target_net.cuda()
-        self.memory = ReplayMemory(10000)
+        self.memory = SumTree(16384)
         self.optimizer = optim.Adam(self.policy_net.parameters())
 
         self.env = Game(const.BOARD_SIZE)
@@ -55,20 +55,23 @@ class Agent:
 
 
     def _perform_gradient_step(self):
-        states, actions, rewards, next_states, deaths = self.memory.sample()
-        self.optimizer.zero_grad()
+        states, actions, rewards, next_states, deaths, indices, weights = self.memory.sample()
 
         with self.target_net.LOCK:
             max_actions = self.policy_net(next_states).max(1)[1]
             next_q_vals = self.target_net(next_states).gather(1, max_actions.unsqueeze(1)).squeeze(1)
         with self.policy_net.LOCK:
             q_vals = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
-
             target_vals = rewards + const.GAMMA * next_q_vals * (1 - deaths)
-            loss = (target_vals - q_vals).pow(2).mean()
+            
+            loss  = (target_vals - q_vals).pow(2) * weights
+            prios = loss + 10**(-5)
+            loss  = loss.mean()
 
+            self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+        self.memory.update_priorities(indices, prios.data.cpu().numpy())
 
 
     def visible_play(self):
