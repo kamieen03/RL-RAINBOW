@@ -2,7 +2,7 @@ from collections import deque
 import random
 import torch
 
-from structures.const import BATCH_SIZE
+from const import BATCH_SIZE
 
 class ReplayMemory(object):
     def __init__(self, capacity):

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import tkinter
 from snakegame.app import App
 

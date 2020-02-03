@@ -52,7 +52,7 @@ class Game:
             self.place_new_reward()
             reward = 1.0
         else:
-            reward = -0.1
+            reward = -0.02
         return {'dead': dead,
                 'reward': reward}
 

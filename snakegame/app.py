@@ -3,6 +3,8 @@ import tkinter
 from snakegame.painter import Painter
 from snakegame.game import Game
 
+import os, sys
+sys.path.append(os.path.abspath(__file__ + "/../../"))
 import structures.const as const
 
 

@@ -22,8 +22,25 @@ class Agent:
         self.optimizer = optim.Adam(self.policy_net.parameters())
 
         self.env = Game(const.BOARD_SIZE)
-        self.state = deque(4*[self.env.get_state()], maxlen = 4)
+        self.state = deque([self.env.get_state() for _ in range(4)], maxlen = 4)
         self.iter = 0
+
+    def test(self):
+        for i in range(10):
+            game = Game(const.BOARD_SIZE)
+            game.newgame()
+            state = deque(maxlen = 4)
+            state.extend([game.get_state() for _ in range(4)])
+            ep_length, reward = 0, 0
+            while True:
+                state.append(game.get_state())
+                action = self.target_net.greedy(state)
+                _dict = game.step(action)
+                reward += _dict['reward']
+                ep_length += 1
+                if _dict['dead']:
+                    print(game.snake.eaten)
+                    break
 
     def train(self):
         self.policy_net.train()
@@ -42,35 +59,37 @@ class Agent:
                 self._perform_gradient_step()
             self.iter += 1
 
-            print(self.iter)
             if dead:
                 self.env.newgame()
                 self.state.clear()
-                self.state.extend(4*[self.env.get_state()])
-            if self.iter % const.TARGET_UPDATE == 0:
-                with self.target_net.LOCK:
-                    with self.policy_net.LOCK:
-                        self.target_net.load_state_dict(self.policy_net.state_dict())
+                self.state.extend([self.env.get_state() for _ in range(4)])
+            if self.iter % 100 == 0:
+                print(self.iter)
+                self.target_net.load_state_dict(self.policy_net.state_dict())
+                torch.save(self.target_net.state_dict(), "model.pth")
+                self.target_net.eval()
+                self.test()
 
 
 
     def _perform_gradient_step(self):
         states, actions, rewards, next_states, deaths, indices, weights = self.memory.sample()
 
-        with self.target_net.LOCK:
-            max_actions = self.policy_net(next_states).max(1)[1]
+        self.optimizer.zero_grad()
+        max_actions = self.policy_net(next_states).max(1)[1]
+        with torch.no_grad():
             next_q_vals = self.target_net(next_states).gather(1, max_actions.unsqueeze(1)).squeeze(1)
-        with self.policy_net.LOCK:
-            q_vals = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
-            target_vals = rewards + const.GAMMA * next_q_vals * (1 - deaths)
-            
-            loss  = (target_vals - q_vals).pow(2) * weights
-            prios = loss + 10**(-5)
-            loss  = loss.mean()
 
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+        q_vals = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+        target_vals = rewards + const.GAMMA * next_q_vals * (1 - deaths)
+        
+        loss  = (target_vals - q_vals).pow(2) * torch.tensor(weights, dtype = torch.float).cuda()
+        prios = loss + 10**(-5)
+        loss  = loss.mean()
+
+        loss.backward()
+        self.optimizer.step()
+
         self.memory.update_priorities(indices, prios.data.cpu().numpy())
 
 
@@ -78,7 +97,7 @@ class Agent:
         def start():
             game.newgame()
             state.clear()
-            state.extend(4*[game.get_state()])
+            state.extend([game.get_state() for _ in range(4)])
             painter.drawnewgame(game.snake)
             frame.after(0, step)
         def step():
@@ -100,5 +119,6 @@ class Agent:
         painter = Painter(frame, game.snake, game.grid)
         frame.after(0, start)
         root.mainloop()
+
 
 

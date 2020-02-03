@@ -8,7 +8,6 @@ from collections import deque
 class DQN(nn.Module):
     def __init__(self):
         super(DQN, self).__init__()
-        self.LOCK = _thread.allocate_lock()
 #        self.model16 = nn.Sequential(
 #            nn.Conv2d(4, 32, 16),
 #            nn.BatchNorm2d(32),
@@ -59,24 +58,21 @@ class DQN(nn.Module):
     def eps_greedy(self, state, iter):
         if type(state) == deque:
             state = torch.cat(tuple(state), dim = 1)
-        with self.LOCK:
-            if random.random() > const.epsilon(iter):
-                self.eval()
-                q_value = self(state)
-                self.train()
-                action = q_value.max(1)[1].data[0]
-            else:
-                action = torch.tensor(random.randrange(4))
+        if random.random() > const.epsilon(iter):
+            q_value = self(state)
+            action = q_value.max(1)[1].data[0]
+        else:
+            action = torch.tensor(random.randrange(4))
         return action
 
     def greedy(self, state):
         if type(state) == deque:
             state = torch.cat(tuple(state), dim = 1)
-        with self.LOCK:
-            self.eval()
+        self.eval()
+        with torch.no_grad():
             q_value = self(state)
-            self.train()
-        if random.random() < 0.01:
+        if random.random() < 0.03:
             return q_value[0].sort()[1][-2]
         return q_value.max(1)[1].data[0]
         
+
